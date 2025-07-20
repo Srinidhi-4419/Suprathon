@@ -24,19 +24,20 @@ export default function AdvancedNewsCredibilityChecker() {
   const [selectedModel, setSelectedModel] = useState("deep") // 'deep' or 'fast'
   const [apiResponse, setApiResponse] = useState(null)
   const [llmResponse, setLlmResponse] = useState(null)
-
+  
   // 3D Scene refs
   const threeContainerRef = useRef(null)
   const sceneRef = useRef(null)
   const rendererRef = useRef(null)
   const particleSystemRef = useRef(null)
-
+  
   // D3 visualization ref
   const d3ContainerRef = useRef(null)
 
   // Advanced 3D Background Scene
   useEffect(() => {
-    if (!threeContainerRef.current) return
+    const container = threeContainerRef.current
+    if (!container) return
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
@@ -44,7 +45,7 @@ export default function AdvancedNewsCredibilityChecker() {
 
     renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setClearColor(0x000000, 0)
-    threeContainerRef.current.appendChild(renderer.domElement)
+    container.appendChild(renderer.domElement)
 
     sceneRef.current = scene
     rendererRef.current = renderer
@@ -81,7 +82,7 @@ export default function AdvancedNewsCredibilityChecker() {
     const particles = new THREE.BufferGeometry()
     const positions = new Float32Array(particleCount * 3)
     const colors = new Float32Array(particleCount * 3)
-
+    
     for (let i = 0; i < particleCount; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 100
       positions[i * 3 + 1] = (Math.random() - 0.5) * 100
@@ -94,7 +95,7 @@ export default function AdvancedNewsCredibilityChecker() {
 
     particles.setAttribute("position", new THREE.BufferAttribute(positions, 3))
     particles.setAttribute("color", new THREE.BufferAttribute(colors, 3))
-
+    
     const particleMaterial = new THREE.PointsMaterial({
       size: 2,
       vertexColors: true,
@@ -126,10 +127,10 @@ export default function AdvancedNewsCredibilityChecker() {
         }
         particleSystemRef.current.geometry.attributes.position.needsUpdate = true
       }
-
+      
       renderer.render(scene, camera)
     }
-
+    
     animate()
 
     const handleResize = () => {
@@ -139,11 +140,11 @@ export default function AdvancedNewsCredibilityChecker() {
     }
 
     window.addEventListener("resize", handleResize)
-
+    
     return () => {
       window.removeEventListener("resize", handleResize)
-      if (threeContainerRef.current && renderer.domElement) {
-        threeContainerRef.current.removeChild(renderer.domElement)
+      if (container && renderer.domElement) {
+        container.removeChild(renderer.domElement)
       }
       renderer.dispose()
     }
@@ -158,7 +159,7 @@ export default function AdvancedNewsCredibilityChecker() {
 
     const width = 400
     const height = 300
-
+    
     const svg = container.append("svg").attr("width", width).attr("height", height)
 
     // Create network data
@@ -224,7 +225,7 @@ export default function AdvancedNewsCredibilityChecker() {
     })
   }, [showResults, credibilityScore, detailedMetrics])
 
-  const useFallbackData = () => {
+  const applyFallbackData = () => {
     const fallbackScore = Math.floor(Math.random() * 40) + 60
     const fallbackMetrics = {
       sourceReliability: Math.floor(Math.random() * 30) + 70,
@@ -326,7 +327,7 @@ export default function AdvancedNewsCredibilityChecker() {
     } catch (err) {
       console.error("API Error:", err)
       clearInterval(progressInterval)
-      useFallbackData()
+      applyFallbackData()
     }
   }
 
@@ -396,17 +397,17 @@ export default function AdvancedNewsCredibilityChecker() {
 
       verificationStatus:
         apiResult.verification_status ||
-        apiResult.metrics?.verification ||
-        apiResult.verified_score ||
-        Math.random() * 100,
-
+                         apiResult.metrics?.verification || 
+                         apiResult.verified_score || 
+                         Math.random() * 100,
+                         
       expertiseLevel:
         apiResult.expertise_level || apiResult.metrics?.expertise || apiResult.expert_score || Math.random() * 100,
 
       analysisText:
         apiResult.analysis_summary ||
-        apiResult.summary ||
-        apiResult.description ||
+                   apiResult.summary || 
+                   apiResult.description || 
         "AI analysis completed successfully.",
     }
   }
@@ -443,8 +444,8 @@ export default function AdvancedNewsCredibilityChecker() {
     )
   }
 
-  // 4. Update D3 Network Visualization with dynamic data
-  useEffect(() => {
+// 4. Update D3 Network Visualization with dynamic data
+useEffect(() => {
     if (!showResults || !d3ContainerRef.current) return
 
     const container = d3.select(d3ContainerRef.current)
@@ -452,27 +453,27 @@ export default function AdvancedNewsCredibilityChecker() {
 
     const width = 400
     const height = 300
-
+  
     const svg = container.append("svg").attr("width", width).attr("height", height)
 
-    // Create dynamic network based on credibility score
-    const nodes = [
-      { id: "source", group: 1, radius: 20, score: credibilityScore },
-      { id: "fact1", group: 2, radius: 12, score: detailedMetrics.factualAccuracy },
-      { id: "fact2", group: 2, radius: 12, score: detailedMetrics.factualAccuracy },
-      { id: "fact3", group: 2, radius: 12, score: detailedMetrics.factualAccuracy },
-      { id: "expert1", group: 3, radius: 15, score: detailedMetrics.expertiseLevel },
-      { id: "expert2", group: 3, radius: 15, score: detailedMetrics.expertiseLevel },
+  // Create dynamic network based on credibility score
+  const nodes = [
+    { id: "source", group: 1, radius: 20, score: credibilityScore },
+    { id: "fact1", group: 2, radius: 12, score: detailedMetrics.factualAccuracy },
+    { id: "fact2", group: 2, radius: 12, score: detailedMetrics.factualAccuracy },
+    { id: "fact3", group: 2, radius: 12, score: detailedMetrics.factualAccuracy },
+    { id: "expert1", group: 3, radius: 15, score: detailedMetrics.expertiseLevel },
+    { id: "expert2", group: 3, radius: 15, score: detailedMetrics.expertiseLevel },
       { id: "verify", group: 4, radius: 18, score: detailedMetrics.verificationStatus },
     ]
 
-    const links = [
-      { source: "source", target: "fact1", value: credibilityScore },
-      { source: "source", target: "fact2", value: credibilityScore },
-      { source: "source", target: "fact3", value: credibilityScore },
-      { source: "fact1", target: "expert1", value: detailedMetrics.expertiseLevel },
-      { source: "fact2", target: "expert2", value: detailedMetrics.expertiseLevel },
-      { source: "expert1", target: "verify", value: detailedMetrics.verificationStatus },
+  const links = [
+    { source: "source", target: "fact1", value: credibilityScore },
+    { source: "source", target: "fact2", value: credibilityScore },
+    { source: "source", target: "fact3", value: credibilityScore },
+    { source: "fact1", target: "expert1", value: detailedMetrics.expertiseLevel },
+    { source: "fact2", target: "expert2", value: detailedMetrics.expertiseLevel },
+    { source: "expert1", target: "verify", value: detailedMetrics.verificationStatus },
       { source: "expert2", target: "verify", value: detailedMetrics.verificationStatus },
     ]
 
@@ -485,16 +486,16 @@ export default function AdvancedNewsCredibilityChecker() {
           .id((d) => d.id)
           .distance(80),
       )
-      .force("charge", d3.forceManyBody().strength(-200))
+    .force("charge", d3.forceManyBody().strength(-200))
       .force("center", d3.forceCenter(width / 2, height / 2))
 
     const link = svg
       .append("g")
-      .selectAll("line")
-      .data(links)
-      .join("line")
+    .selectAll("line")
+    .data(links)
+    .join("line")
       .attr("stroke", (d) => {
-        // Color based on credibility strength
+      // Color based on credibility strength
         if (d.value >= 75) return "#10b981" // Green for high credibility
         if (d.value >= 50) return "#f59e0b" // Yellow for medium
         return "#ef4444" // Red for low credibility
@@ -504,33 +505,33 @@ export default function AdvancedNewsCredibilityChecker() {
 
     const node = svg
       .append("g")
-      .selectAll("circle")
-      .data(nodes)
-      .join("circle")
+    .selectAll("circle")
+    .data(nodes)
+    .join("circle")
       .attr("r", (d) => d.radius * (0.5 + d.score / 200)) // Size based on score
       .attr("fill", (d) => {
-        // Color based on node score
+      // Color based on node score
         if (d.score >= 75) return "#10b981"
         if (d.score >= 50) return "#f59e0b"
         return "#ef4444"
-      })
-      .attr("stroke", "#fff")
+    })
+    .attr("stroke", "#fff")
       .attr("stroke-width", 2)
 
-    // Add labels
+  // Add labels
     const labels = svg
       .append("g")
-      .selectAll("text")
-      .data(nodes)
-      .join("text")
+    .selectAll("text")
+    .data(nodes)
+    .join("text")
       .text((d) => d.id.toUpperCase())
-      .attr("font-size", "10px")
-      .attr("fill", "#fff")
-      .attr("text-anchor", "middle")
+    .attr("font-size", "10px")
+    .attr("fill", "#fff")
+    .attr("text-anchor", "middle")
       .attr("dy", 4)
 
-    simulation.on("tick", () => {
-      link
+  simulation.on("tick", () => {
+    link
         .attr("x1", (d) => d.source.x)
         .attr("y1", (d) => d.source.y)
         .attr("x2", (d) => d.target.x)
@@ -546,10 +547,10 @@ export default function AdvancedNewsCredibilityChecker() {
     <div className="min-h-screen bg-black relative overflow-hidden">
       {/* 3D Background */}
       <div ref={threeContainerRef} className="absolute inset-0 opacity-30" />
-
+      
       {/* Animated gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-teal-900/20 animate-pulse" />
-
+      
       {/* Glassmorphism Header */}
       <nav className="relative z-50 backdrop-blur-2xl bg-white/5 border-b border-white/10">
         <div className="container mx-auto px-6 py-4">
@@ -565,11 +566,11 @@ export default function AdvancedNewsCredibilityChecker() {
                 <p className="text-xs text-gray-400">Advanced News Credibility Engine</p>
               </div>
             </div>
-                          <div className="hidden md:flex items-center space-x-6 text-sm">
-                <div className="flex items-center space-x-2 text-green-400">
-                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <div className="hidden md:flex items-center space-x-6 text-sm">
+              <div className="flex items-center space-x-2 text-green-400">
+                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                   <span>AI Systems Active</span>
-                </div>
+              </div>
               <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full border-2 border-white/20"></div>
             </div>
           </div>
@@ -584,7 +585,7 @@ export default function AdvancedNewsCredibilityChecker() {
               <div className="w-2 h-2 bg-blue-400 rounded-full mr-3 animate-ping"></div>
               AI-Powered Fact Checking • Real-time Source Verification • 99.3% Accuracy
             </div>
-
+            
             <h1 className="text-7xl md:text-9xl font-black mb-8 leading-none">
               <span className="bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent">
                 TRUTH
@@ -594,7 +595,7 @@ export default function AdvancedNewsCredibilityChecker() {
                 DETECTION
               </span>
             </h1>
-
+            
             <p className="text-xl text-gray-300 mb-16 leading-relaxed max-w-4xl mx-auto">
               Harness the power of advanced machine learning and AI algorithms to detect
               misinformation, verify sources, and analyze news credibility with unprecedented accuracy and speed.
@@ -644,10 +645,10 @@ export default function AdvancedNewsCredibilityChecker() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                                      <div className="text-right">
+                    <div className="text-right">
                     <div className="text-green-400 text-sm font-mono">AI ACTIVE</div>
                     <div className="text-xs text-gray-500">15 Verification Sources Ready</div>
-                  </div>
+                    </div>
                     <div className="w-3 h-3 bg-green-400 rounded-full animate-ping"></div>
                   </div>
                 </div>
@@ -749,7 +750,7 @@ export default function AdvancedNewsCredibilityChecker() {
                       />
                     </div>
                   )}
-
+                  
                   <div className="absolute bottom-4 right-4 flex items-center space-x-4">
                     <div className="bg-black/50 px-3 py-1 rounded-full text-xs text-gray-400 border border-white/10">
                       {inputText.length}/10000 chars
@@ -766,16 +767,16 @@ export default function AdvancedNewsCredibilityChecker() {
                       <span className="text-blue-400 font-mono">{Math.round(analysisProgress)}%</span>
                     </div>
                     <div className="w-full bg-black/50 rounded-full h-3 mb-4 overflow-hidden">
-                      <div
+                      <div 
                         className="h-full bg-gradient-to-r from-blue-400 via-purple-500 to-cyan-400 rounded-full transition-all duration-500 animate-pulse"
                         style={{ width: `${analysisProgress}%` }}
                       />
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs text-gray-400">
                                           <div>🤖 AI Analysis: Active</div>
-                    <div>🔗 Source Verification: Running</div>
+                      <div>🔗 Source Verification: Running</div>
                     <div>📊 Content Analysis: Processing</div>
-                    <div>✅ Fact Checking: Validating</div>
+                      <div>✅ Fact Checking: Validating</div>
                     </div>
                   </div>
                 )}
@@ -815,7 +816,7 @@ export default function AdvancedNewsCredibilityChecker() {
           </div>
 
           {/* Advanced Results Section */}
-          <div
+          <div 
             id="results-section"
             className={`max-w-7xl mx-auto mt-16 transition-all duration-1000 transform ${
               showResults ? "opacity-100 translate-y-0" : "opacity-0 translate-y-20 pointer-events-none"
@@ -891,7 +892,7 @@ export default function AdvancedNewsCredibilityChecker() {
                                 <span className={`text-${metric.color}-400 font-mono`}>{metric.value}%</span>
                               </div>
                               <div className="w-full bg-gray-800 rounded-full h-2">
-                                <div
+                                <div 
                                   className={`h-full bg-gradient-to-r from-${metric.color}-400 to-${metric.color}-600 rounded-full`}
                                   style={{ width: `${metric.value}%` }}
                                 />
@@ -941,7 +942,7 @@ export default function AdvancedNewsCredibilityChecker() {
                                     <span className="font-mono">{item.value}%</span>
                                   </div>
                                   <div className="w-full bg-gray-800 rounded-full h-2">
-                                    <div
+                                    <div 
                                       className="h-full bg-gradient-to-r from-blue-400 to-purple-500 rounded-full"
                                       style={{ width: `${item.value}%` }}
                                     />
@@ -1014,9 +1015,9 @@ export default function AdvancedNewsCredibilityChecker() {
                         <div className="h-80 flex flex-col justify-center">
                           <div className="space-y-6">
                             {[
-                              {
+                              { 
                                 label: "Source Authority",
-                                value: detailedMetrics.sourceReliability,
+                                value: detailedMetrics.sourceReliability, 
                                 icon: "🏛️",
                                 color:
                                   detailedMetrics.sourceReliability >= 70
@@ -1027,7 +1028,7 @@ export default function AdvancedNewsCredibilityChecker() {
                               },
                               {
                                 label: "Confidence Level",
-                                value: detailedMetrics.factualAccuracy,
+                                value: detailedMetrics.factualAccuracy, 
                                 icon: "✅",
                                 color:
                                   detailedMetrics.factualAccuracy >= 70
@@ -1038,7 +1039,7 @@ export default function AdvancedNewsCredibilityChecker() {
                               },
                               {
                                 label: "Bias Detection",
-                                value: 100 - detailedMetrics.biasLevel,
+                                value: 100 - detailedMetrics.biasLevel, 
                                 icon: "⚖️",
                                 color:
                                   100 - detailedMetrics.biasLevel >= 70
@@ -1049,7 +1050,7 @@ export default function AdvancedNewsCredibilityChecker() {
                               },
                               {
                                 label: "Expert Consensus",
-                                value: detailedMetrics.expertiseLevel,
+                                value: detailedMetrics.expertiseLevel, 
                                 icon: "👨‍🔬",
                                 color:
                                   detailedMetrics.expertiseLevel >= 70
@@ -1069,9 +1070,9 @@ export default function AdvancedNewsCredibilityChecker() {
                                 </div>
                                 <div className="relative">
                                   <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden">
-                                    <div
+                                    <div 
                                       className={`h-full bg-gradient-to-r ${item.color} rounded-full transition-all duration-1000 ease-out shadow-lg`}
-                                      style={{
+                                      style={{ 
                                         width: `${item.value}%`,
                                         boxShadow: `0 0 20px rgba(${item.value >= 70 ? "34, 197, 94" : item.value >= 50 ? "245, 158, 11" : "239, 68, 68"}, 0.3)`,
                                       }}
@@ -1120,7 +1121,7 @@ export default function AdvancedNewsCredibilityChecker() {
                                   <feDropShadow dx="2" dy="2" stdDeviation="3" floodOpacity="0.3" />
                                 </filter>
                               </defs>
-
+                              
                               {/* Outer Ring with Glow */}
                               <circle
                                 cx="175"
@@ -1148,7 +1149,7 @@ export default function AdvancedNewsCredibilityChecker() {
                                 strokeWidth="25"
                                 strokeDasharray={377}
                                 strokeDashoffset={377 - (377 * credibilityScore) / 100}
-                                strokeLinecap="round"
+                                  strokeLinecap="round"
                                 className="transition-all duration-3000 ease-out"
                                 filter="url(#glow)"
                               />
@@ -1173,17 +1174,17 @@ export default function AdvancedNewsCredibilityChecker() {
                                       strokeWidth={isMainMarker ? "3" : "1"}
                                     />
                                     {isMainMarker && (
-                                      <text
+                                    <text 
                                         x={175 + Math.cos((angle * Math.PI) / 180) * 130}
                                         y={175 + Math.sin((angle * Math.PI) / 180) * 130}
-                                        textAnchor="middle"
+                                      textAnchor="middle" 
                                         fill="rgba(255,255,255,0.9)"
                                         fontSize="14"
                                         fontWeight="bold"
                                         dy="5"
-                                      >
-                                        {value}
-                                      </text>
+                                    >
+                                      {value}
+                                    </text>
                                     )}
                                   </g>
                                 )
@@ -1273,7 +1274,7 @@ export default function AdvancedNewsCredibilityChecker() {
                                 </g>
                               )}
                             </svg>
-
+                            
                             {/* Enhanced Center Display */}
                             <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 text-center">
                               <div className="relative">
@@ -1303,8 +1304,8 @@ export default function AdvancedNewsCredibilityChecker() {
                                           ? "⚠️"
                                           : "🚨"}
                                   </span>
-                                  {credibilityInfo.level}
-                                </div>
+                                {credibilityInfo.level}
+                              </div>
 
                                 {/* Animated Confidence Indicator */}
                                 <div className="mt-3 flex justify-center space-x-1">
@@ -1414,7 +1415,7 @@ export default function AdvancedNewsCredibilityChecker() {
                                     </div>
                                   </div>
                                   <div className="w-full bg-gray-800 rounded-full h-2 mt-2">
-                                    <div
+                                    <div 
                                       className={`h-full rounded-full transition-all duration-1000 ${
                                         step.confidence >= 70
                                           ? "bg-gradient-to-r from-green-400 to-emerald-600"
@@ -1441,25 +1442,25 @@ export default function AdvancedNewsCredibilityChecker() {
                         <div className="h-80">
                           <div className="grid grid-cols-2 gap-6 h-full">
                             {[
-                              {
+                              { 
                                 category: "Misinformation Risk",
                                 risk: Math.max(100 - credibilityScore, 0),
                                 icon: "⚠️",
                                 description: "Likelihood of false information",
                               },
-                              {
+                              { 
                                 category: "Bias Risk",
                                 risk: detailedMetrics.biasLevel,
                                 icon: "⚖️",
                                 description: "Political or ideological slant",
                               },
-                              {
+                              { 
                                 category: "Source Risk",
                                 risk: Math.max(100 - detailedMetrics.sourceReliability, 0),
                                 icon: "🏛️",
                                 description: "Publisher credibility concerns",
                               },
-                              {
+                              { 
                                 category: "Verification Risk",
                                 risk: Math.max(100 - detailedMetrics.verificationStatus, 0),
                                 icon: "🔍",
@@ -1493,7 +1494,7 @@ export default function AdvancedNewsCredibilityChecker() {
                                     </span>
                                   </div>
                                   <div className="w-full bg-gray-800 rounded-full h-3">
-                                    <div
+                                    <div 
                                       className={`h-full rounded-full transition-all duration-1000 ${
                                         item.risk <= 30
                                           ? "bg-gradient-to-r from-green-400 to-emerald-600"
@@ -1545,7 +1546,7 @@ export default function AdvancedNewsCredibilityChecker() {
                 <p className="text-xs text-gray-400">AI-Enhanced News Credibility Analysis</p>
               </div>
             </div>
-                                  <div className="text-center md:text-right">
+            <div className="text-center md:text-right">
                         <p className="text-gray-400 mb-4">Powered by Advanced AI and Multiple Verification Sources</p>
               <div className="flex justify-center md:justify-end space-x-6">
                 <a href="#" className="text-gray-400 hover:text-white transition-colors">
