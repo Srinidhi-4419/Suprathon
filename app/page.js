@@ -224,6 +224,63 @@ export default function AdvancedNewsCredibilityChecker() {
     })
   }, [showResults, credibilityScore, detailedMetrics])
 
+  const useFallbackData = () => {
+    const fallbackScore = Math.floor(Math.random() * 40) + 60
+    const fallbackMetrics = {
+      sourceReliability: Math.floor(Math.random() * 30) + 70,
+      factualAccuracy: Math.floor(Math.random() * 35) + 65,
+      biasLevel: Math.floor(Math.random() * 40) + 20,
+      verificationStatus: Math.floor(Math.random() * 25) + 75,
+      expertiseLevel: Math.floor(Math.random() * 30) + 70,
+    }
+
+    setCredibilityScore(fallbackScore)
+    setDetailedMetrics(fallbackMetrics)
+    setAnalysisResult("Analysis completed using fallback data due to API connection issue.")
+    setVerdict(fallbackScore >= 70 ? "REAL" : "FAKE")
+
+    setTimeout(() => {
+      setIsAnalyzing(false)
+      setShowResults(true)
+    }, 500)
+  }
+
+  const processResults = (checkResult, llmResult) => {
+    // Use the checkResult as primary data source
+    const credScore = checkResult.credibility_score || 0
+    const confidence = checkResult.confidence_level || 0
+    
+    setVerdict(checkResult.final_verdict || "UNKNOWN")
+    setCredibilityScore(Math.round(credScore))
+    
+    // Map API response to detailed metrics
+    const metrics = {
+      sourceReliability: Math.round((checkResult.pipeline_details?.source_reliability || 0) * 100),
+      factualAccuracy: Math.round(confidence),
+      biasLevel: Math.round((checkResult.bias_indicators_count || 0) * 15),
+      verificationStatus: Math.round((checkResult.number_of_evidences || 0) * 12),
+      expertiseLevel: Math.round(100 - (checkResult.spam_detection_score || 0) * 10),
+    }
+    setDetailedMetrics(metrics)
+
+    // Generate analysis text based on the results
+    let analysisText = ""
+    if (checkResult.final_verdict === "REAL") {
+      analysisText = `Our verification found supporting evidence with ${confidence}% confidence.`
+    } else {
+      analysisText = "Potential issues were detected. "
+      if (checkResult.llm_details?.gemini?.red_flags?.length > 0) {
+        analysisText += `Red flags: ${checkResult.llm_details.gemini.red_flags.join(", ")}`
+      }
+    }
+    setAnalysisResult(analysisText)
+
+    setTimeout(() => {
+      setIsAnalyzing(false)
+      setShowResults(true)
+    }, 500)
+  }
+
   const handleAnalyze = async () => {
     if (!inputText.trim()) {
       alert("Please enter a URL or text to analyze.")
@@ -271,63 +328,6 @@ export default function AdvancedNewsCredibilityChecker() {
       clearInterval(progressInterval)
       useFallbackData()
     }
-  }
-
-  const processResults = (checkResult, llmResult) => {
-    // Use the checkResult as primary data source
-    const credScore = checkResult.credibility_score || 0
-    const confidence = checkResult.confidence_level || 0
-    
-    setVerdict(checkResult.final_verdict || "UNKNOWN")
-    setCredibilityScore(Math.round(credScore))
-    
-    // Map API response to detailed metrics
-    const metrics = {
-      sourceReliability: Math.round((checkResult.pipeline_details?.source_reliability || 0) * 100),
-      factualAccuracy: Math.round(confidence),
-      biasLevel: Math.round((checkResult.bias_indicators_count || 0) * 15),
-      verificationStatus: Math.round((checkResult.number_of_evidences || 0) * 12),
-      expertiseLevel: Math.round(100 - (checkResult.spam_detection_score || 0) * 10),
-    }
-    setDetailedMetrics(metrics)
-
-    // Generate analysis text based on the results
-    let analysisText = ""
-    if (checkResult.final_verdict === "REAL") {
-      analysisText = `Our verification found supporting evidence with ${confidence}% confidence.`
-    } else {
-      analysisText = "Potential issues were detected. "
-      if (checkResult.llm_details?.gemini?.red_flags?.length > 0) {
-        analysisText += `Red flags: ${checkResult.llm_details.gemini.red_flags.join(", ")}`
-      }
-    }
-    setAnalysisResult(analysisText)
-
-    setTimeout(() => {
-      setIsAnalyzing(false)
-      setShowResults(true)
-    }, 500)
-  }
-
-  const useFallbackData = () => {
-    const fallbackScore = Math.floor(Math.random() * 40) + 60
-    const fallbackMetrics = {
-      sourceReliability: Math.floor(Math.random() * 30) + 70,
-      factualAccuracy: Math.floor(Math.random() * 35) + 65,
-      biasLevel: Math.floor(Math.random() * 40) + 20,
-      verificationStatus: Math.floor(Math.random() * 25) + 75,
-      expertiseLevel: Math.floor(Math.random() * 30) + 70,
-    }
-
-    setCredibilityScore(fallbackScore)
-    setDetailedMetrics(fallbackMetrics)
-    setAnalysisResult("Analysis completed using fallback data due to API connection issue.")
-    setVerdict(fallbackScore >= 70 ? "REAL" : "FAKE")
-
-    setTimeout(() => {
-      setIsAnalyzing(false)
-      setShowResults(true)
-    }, 500)
   }
 
   const getCredibilityLevel = (score) => {
